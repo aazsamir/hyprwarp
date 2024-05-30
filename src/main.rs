@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    process::{exit, Command},
+    process::{Command},
 };
 
 use serde::Deserialize;
@@ -27,7 +27,7 @@ fn main() {
         match contains {
             Some(window) => {
                 let dir = window.mouse_on_border(&mouse);
-                windows.warp_to_adjacent_output(window, &mouse, dir, &engine)
+                windows.warp_to_adjacent_output(&mouse, dir, &engine)
             }
             None => {
                 println!("Mouse is not in any window");
@@ -82,6 +82,7 @@ const DIRECTION_RIGHT: i32 = 2;
 const DIRECTION_UP: i32 = 4;
 const DIRECTION_DOWN: i32 = 8;
 
+#[allow(dead_code)]
 fn dir_to_string(dir: i32) -> String {
     let mut s = String::new();
     if dir & DIRECTION_UP != 0 {
@@ -111,23 +112,12 @@ impl Window {
         }
     }
 
-    fn update(&mut self, width: i32, height: i32, x: i32, y: i32) {
-        self.width = width;
-        self.height = height;
-        self.x = x;
-        self.y = y;
-    }
-
     fn border_x(&self) -> i32 {
         self.x + self.width
     }
 
     fn border_y(&self) -> i32 {
         self.y + self.height
-    }
-
-    fn contains_mouse(&self, mouse: &Mouse) -> bool {
-        self.contains(mouse.x, mouse.y)
     }
 
     fn contains(&self, x: i32, y: i32) -> bool {
@@ -180,10 +170,6 @@ impl Windows {
         self.windows.push(window);
     }
 
-    fn remove(&mut self, index: usize) {
-        self.windows.remove(index);
-    }
-
     fn contains_mouse(&self, mouse: &Mouse) -> Option<&Window> {
         self.contains(mouse.x, mouse.y)
     }
@@ -199,7 +185,6 @@ impl Windows {
 
     fn warp_to_adjacent_output(
         &self,
-        current: &Window,
         mouse: &Mouse,
         dir: i32,
         engine: &impl Engine,
