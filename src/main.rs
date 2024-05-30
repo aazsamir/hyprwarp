@@ -1,4 +1,7 @@
-use std::{fmt::Display, process::{Command, exit}};
+use std::{
+    fmt::Display,
+    process::{exit, Command},
+};
 
 use serde::Deserialize;
 
@@ -47,10 +50,7 @@ struct Mouse {
 
 impl Mouse {
     fn new(x: i32, y: i32) -> Mouse {
-        Mouse {
-            x,
-            y,
-        }
+        Mouse { x, y }
     }
 
     fn update(&mut self, x: i32, y: i32) {
@@ -315,13 +315,11 @@ trait Engine {
     fn move_mouse(&self, mouse: &Mouse, x: i32, y: i32);
 }
 
-struct HyprlandEngine {
-}
+struct HyprlandEngine {}
 
 impl HyprlandEngine {
     fn new() -> HyprlandEngine {
-        HyprlandEngine {
-        }
+        HyprlandEngine {}
     }
 }
 
