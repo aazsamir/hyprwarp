@@ -5,9 +5,10 @@ use std::{
 
 use serde::Deserialize;
 
+#[allow(while_true)]
 fn main() {
     println!("hyprwarp starting...");
-    let mut engine = HyprlandEngine::new();
+    let engine = HyprlandEngine::new();
     let windows = engine.get_windows();
 
     let mut last_mouse = engine.get_mouse();
@@ -74,35 +75,28 @@ struct Window {
     y: i32,
 }
 
-#[derive(Debug)]
-enum Direction {
-    None = 0,
-    Left = 1,
-    Right = 2,
-    Up = 4,
-    Down = 8,
-}
-
-impl Default for Direction {
-    fn default() -> Self {
-        Direction::None
-    }
-}
+// const
+const DIRECTION_NONE: i32 = 0;
+const DIRECTION_LEFT: i32 = 1;
+const DIRECTION_RIGHT: i32 = 2;
+const DIRECTION_UP: i32 = 4;
+const DIRECTION_DOWN: i32 = 8;
 
 fn dir_to_string(dir: i32) -> String {
     let mut s = String::new();
-    if dir & Direction::Up as i32 != 0 {
+    if dir & DIRECTION_UP != 0 {
         s.push_str("Up ");
     }
-    if dir & Direction::Down as i32 != 0 {
+    if dir & DIRECTION_DOWN != 0 {
         s.push_str("Down ");
     }
-    if dir & Direction::Left as i32 != 0 {
+    if dir & DIRECTION_LEFT != 0 {
         s.push_str("Left ");
     }
-    if dir & Direction::Right as i32 != 0 {
+    if dir & DIRECTION_RIGHT != 0 {
         s.push_str("Right ");
     }
+
     s
 }
 
@@ -141,19 +135,19 @@ impl Window {
     }
 
     fn mouse_on_border(&self, mouse: &Mouse) -> i32 {
-        let mut dir: i32 = Direction::None as i32;
+        let mut dir: i32 = DIRECTION_NONE;
 
         if mouse.y == self.y && mouse.x >= self.x && mouse.x <= self.border_x() {
-            dir |= Direction::Up as i32;
+            dir |= DIRECTION_UP;
         }
         if mouse.y == self.border_y() && mouse.x >= self.x && mouse.x <= self.border_x() {
-            dir |= Direction::Down as i32;
+            dir |= DIRECTION_DOWN;
         }
         if mouse.x == self.x && mouse.y >= self.y && mouse.y <= self.border_y() {
-            dir |= Direction::Left as i32;
+            dir |= DIRECTION_LEFT;
         }
         if mouse.x == self.border_x() && mouse.y >= self.y && mouse.y <= self.border_y() {
-            dir |= Direction::Right as i32;
+            dir |= DIRECTION_RIGHT;
         }
 
         dir
@@ -216,15 +210,27 @@ impl Windows {
             let mut x = mouse.x;
             let mut y = mouse.y;
 
-            if dir & Direction::Up as i32 != 0 {
+            if dir & DIRECTION_UP as i32 != 0 {
                 y = window.border_y();
+
+                if mouse.x < window.x {
+                    x = window.x;
+                } else if mouse.x > window.border_x() {
+                    x = window.border_x();
+                }
             }
 
-            if dir & Direction::Down as i32 != 0 {
+            if dir & DIRECTION_DOWN as i32 != 0 {
                 y = window.y;
+
+                if mouse.x < window.x {
+                    x = window.x;
+                } else if mouse.x > window.border_x() {
+                    x = window.border_x();
+                }
             }
 
-            if dir & Direction::Left as i32 != 0 {
+            if dir & DIRECTION_LEFT as i32 != 0 {
                 x = window.border_x();
 
                 if mouse.y < window.y {
@@ -234,8 +240,14 @@ impl Windows {
                 }
             }
 
-            if dir & Direction::Right as i32 != 0 {
+            if dir & DIRECTION_RIGHT as i32 != 0 {
                 x = window.x;
+
+                if mouse.y < window.y {
+                    y = window.y;
+                } else if mouse.y > window.border_y() {
+                    y = window.border_y();
+                }
             }
 
             engine.move_mouse(mouse, x, y);
@@ -247,8 +259,7 @@ impl Windows {
 
         for window in &self.windows {
             match dir {
-                4 => {
-                    // up
+                DIRECTION_UP => {
                     if window.y <= mouse.y {
                         if let Some(best_window) = best {
                             if window.y > best_window.y {
@@ -259,8 +270,7 @@ impl Windows {
                         }
                     }
                 }
-                8 => {
-                    // down
+                DIRECTION_DOWN => {
                     if window.border_y() >= mouse.y {
                         if let Some(best_window) = best {
                             if window.border_y() < best_window.border_y() {
@@ -271,8 +281,7 @@ impl Windows {
                         }
                     }
                 }
-                1 => {
-                    // left
+                DIRECTION_LEFT => {
                     if window.border_x() <= mouse.x {
                         if let Some(best_window) = best {
                             if window.border_x() > best_window.border_x() {
@@ -283,8 +292,7 @@ impl Windows {
                         }
                     }
                 }
-                2 => {
-                    // right
+                DIRECTION_RIGHT => {
                     if window.x >= mouse.x {
                         if let Some(best_window) = best {
                             if window.x < best_window.x {
@@ -331,10 +339,10 @@ impl Engine for HyprlandEngine {
             .expect("failed to execute `hyprctl cursorpos`");
 
         // stdout is "123, 456"
-        // split it to (x,y)
         let cursorpos = String::from_utf8(cursorpos.stdout).unwrap();
         // get rid of \n
         let cursorpos = cursorpos.trim();
+        // split it to (x,y)
         let mut parts = cursorpos.split(", ");
         let x = parts.next().unwrap().parse::<i32>().unwrap();
         let y = parts.next().unwrap().parse::<i32>().unwrap();
